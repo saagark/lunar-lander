@@ -7,6 +7,12 @@ from collections import deque, namedtuple
 import time
 import random
 
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else
+    "mps" if torch.backends.mps.is_available() else
+    "cpu"
+)
+
 Transition = namedtuple(
     "Transition",
     ("state",
@@ -14,6 +20,8 @@ Transition = namedtuple(
      "reward",
      "next_state",
      "done"))
+
+
 class ReplayMemory(object):
 
     def __init__(self, capacity):
@@ -29,7 +37,8 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-def DQN(nn.Module):
+
+class DQN(nn.Module):
     def __init__(self, state_size, action_size, seed):
         super(DQN, self).__init__()
         self.seed = torch.manual_seed(seed)
@@ -51,11 +60,6 @@ def main():
 
 
 if __name__ == '__main__':
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else
-        "mps" if torch.backends.mps.is_available() else
-        "cpu"
-    )
 
     t = time.time()
     main()
