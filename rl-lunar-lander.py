@@ -7,6 +7,7 @@ from collections import deque, namedtuple
 import time
 import random
 from gymnasium.wrappers import RecordVideo
+import os
 
 # TensorBoard logging
 from torch.utils.tensorboard import SummaryWriter
@@ -47,11 +48,11 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.seed = torch.manual_seed(seed)
         self.net = nn.Sequential(
-            nn.Linear(state_size, 128),
+            nn.Linear(state_size, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(128, action_size)
+            nn.Linear(256, action_size)
         )
         # Kaiming (He) initialization for all Linear layers
         for m in self.net:
@@ -87,7 +88,7 @@ def main():
 
     # Hyperparameters
     num_episodes = 2000           # More episodes for stable learning
-    max_t = 1000                  # Max steps per episode
+    max_t = 10000                  # Max steps per episode
     batch_size = 64               # Standard batch size
     gamma = 0.99                  # Discount factor
     lr = 1e-3                     # Learning rate (higher for faster learning)
@@ -97,7 +98,6 @@ def main():
     eps_decay = 0.995             # Epsilon decay rate
     min_memory_for_training = 1000  # Minimum buffer size before training
     render_every = 100
-    solved_score = 200            # LunarLander-v3 solved threshold
     scores_window = deque(maxlen=100)
     tau = 0.005                   # Slightly higher tau for faster soft update
 
@@ -145,6 +145,7 @@ def main():
                 with torch.no_grad():
                     next_q_values = target_net(next_states).max(1)[
                         0].unsqueeze(1)
+                    # Bellman equation
                     target = rewards + (gamma * next_q_values * (1 - dones))
 
                 loss = F.mse_loss(q_values, target)
@@ -195,28 +196,36 @@ def main():
         print(
             f"Episode {episode}\tReward: {total_reward:.2f}\tAverage100: {avg_reward:.2f}\tEpsilon: {eps:.3f}")
 
-        # Early stopping if solved
-        if avg_reward >= solved_score and episode >= 100:
-            print(
-                f"Environment solved in {episode} episodes! Average score: {avg_reward:.2f}")
-            break
-
     writer.close()
 
-    # Render the solution after training
-    print("\nRendering the trained agent...")
-    state, _ = env.reset(seed=seed)
-    total_reward = 0
+    final_ckpt = {
+        "episode": episode,
+        "avg_reward": float(avg_reward),
+        "eps": float(eps),
+        "seed": seed,
+        "state_dict": policy_net.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+    }
+    torch.save(final_ckpt, os.path.join("artifacts", "dqn_final.pth"))
+
+    # Save a video of the trained agent
+    print("\nSaving video of the trained agent...")
+    video_env = gym.make("LunarLander-v3", continuous=False, gravity=-10.0,
+                         enable_wind=False, wind_power=15.0, turbulence_power=1.5,
+                         render_mode="rgb_array")
+    video_env = RecordVideo(video_env, video_folder="videos",
+                            episode_trigger=lambda ep: True, name_prefix="final_agent")
+    state, _ = video_env.reset(seed=seed)
+    total_reward_video = 0
     for t in range(max_t):
-        env.render()
         action = select_action([state], policy_net, 0.0, action_size)  # Greedy
-        next_state, reward, terminated, truncated, _ = env.step(action)
+        next_state, reward, terminated, truncated, _ = video_env.step(action)
         state = next_state
-        total_reward += reward
+        total_reward_video += reward
         if terminated or truncated:
             break
-    print(f"Rendered episode reward: {total_reward:.2f}")
-    env.close()
+    print(f"Saved final agent video, reward: {total_reward_video:.2f}")
+    video_env.close()
 
 
 if __name__ == '__main__':
