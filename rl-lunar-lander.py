@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from collections import deque, namedtuple
 import time
 import random
+from gymnasium.wrappers import RecordVideo
 
 # TensorBoard logging
 from torch.utils.tensorboard import SummaryWriter
@@ -77,7 +78,7 @@ def select_action(state, policy_net, eps, action_size):
 
 
 def main():
-    from gymnasium.wrappers import RecordVideo
+
     seed = 42  # for reproducibility
     random.seed(seed)
     np.random.seed(seed)
@@ -95,7 +96,7 @@ def main():
     eps_end = 0.01                # Final epsilon
     eps_decay = 0.995             # Epsilon decay rate
     min_memory_for_training = 1000  # Minimum buffer size before training
-    render_every = 500
+    render_every = 100
     solved_score = 200            # LunarLander-v3 solved threshold
     scores_window = deque(maxlen=100)
     tau = 0.005                   # Slightly higher tau for faster soft update
