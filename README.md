@@ -23,5 +23,6 @@ Reward over most recent 100 episodes (tensorboard logging)
 ## Next steps/open questions
 
 1. The reward/last 100 episodes initially goes down before increasing again. Need to investigate why this happens.
+    top ideas: too much exploration (epsilon decay not set optimally), every episode uses the same env seed so not enough learning, maybe hovering gives a good enough reward that the model doesn't know to land until it finally explores that path.
 2. can add early exit once avg reward reaches a avg threshold >2xx points (200 points awarded for proper landing)
 3. interested to know if theres a better defaul weight initialization
