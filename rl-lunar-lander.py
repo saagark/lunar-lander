@@ -87,8 +87,8 @@ def main():
     print("Device:", device)
 
     # Hyperparameters
-    num_episodes = 2000           # More episodes for stable learning
-    max_t = 10000                  # Max steps per episode
+    num_episodes = 700            # More episodes for stable learning
+    max_t = 10000                 # Max steps per episode
     batch_size = 64               # Standard batch size
     gamma = 0.99                  # Discount factor
     lr = 1e-3                     # Learning rate (higher for faster learning)
@@ -100,6 +100,8 @@ def main():
     render_every = 100
     scores_window = deque(maxlen=100)
     tau = 0.005                   # Slightly higher tau for faster soft update
+
+    chkpt_save_dir = "artifacts"
 
     env = gym.make("LunarLander-v3", continuous=False, gravity=-10.0,
                    enable_wind=False, wind_power=15.0, turbulence_power=1.5)
@@ -206,7 +208,8 @@ def main():
         "state_dict": policy_net.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
     }
-    torch.save(final_ckpt, os.path.join("artifacts", "dqn_final.pth"))
+    os.makedirs(chkpt_save_dir, exist_ok=True)
+    torch.save(final_ckpt, os.path.join(chkpt_save_dir, "dqn_final.pth"))
 
     # Save a video of the trained agent
     print("\nSaving video of the trained agent...")
